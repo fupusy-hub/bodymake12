@@ -1,0 +1,41 @@
+name: Import and patch BodyMake 12
+on:
+  push:
+    paths:
+      - '.github/workflows/import-and-patch.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import current production files
+        run: |
+          for f in index.html app.css app1.js app2.js app3.js manifest.webmanifest sw.js privacy.html terms.html icon-192.png icon-512.png; do curl -fsSL "https://bodymake12.vercel.app/$f" -o "$f"; done
+      - name: Apply v1.0.1 progress hotfix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text()
+          s=s.replace('<div class="big"><span id="daysDone">0</span> / 84日</div>','''<div class="progressTopRow"><div><div class="label">目標日までの進捗</div><div class="big"><span id="daysDone">0</span> / <span id="totalDays">84</span>日</div></div><div class="progressPercentBox"><span>達成率</span><b id="progressPercent">0%</b></div></div><div class="progressTrack" aria-label="目標日までの進捗"><div id="progressBar" class="progressFill" style="width:0%"></div></div><div class="progressMeta"><span>開始 <b id="progressStartDate">--/--</b></span><span>残り <b id="remainingDays">--日</b></span><span>目標 <b id="progressGoalDate">--/--</b></span></div>''')
+          s=s.replace('app.css?v=1.0.0','app.css?v=1.0.1').replace('app1.js?v=1.0.0','app1.js?v=1.0.1').replace('app2.js?v=1.0.0','app2.js?v=1.0.1').replace('app3.js?v=1.0.0','app3.js?v=1.0.1')
+          p.write_text(s)
+          p=Path('app1.js'); s=p.read_text().replace("const APP_VERSION='1.0.0'","const APP_VERSION='1.0.1'"); p.write_text(s)
+          p=Path('app2.js'); s=p.read_text()
+          old="function renderHeader(){const today=isoLocal(),sd=settings.startDate||today,raw=diffDays(today,sd);document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ja-JP',{month:'long',day:'numeric',weekday:'short'}).format(new Date());document.getElementById('weekPill').textContent=raw<0?'開始前':raw>83?'完了':`Week ${Math.floor(raw/7)+1}`;document.getElementById('daysDone').textContent=raw<0?0:Math.min(84,raw+1);"
+          new="function renderHeader(){const today=isoLocal(),sd=settings.startDate||today,gd=(settings.goalDate&&isValidDate(settings.goalDate)&&diffDays(settings.goalDate,sd)>=0)?settings.goalDate:addDays(sd,83),raw=diffDays(today,sd),total=Math.max(1,diffDays(gd,sd)+1),done=raw<0?0:Math.min(total,raw+1),pct=Math.max(0,Math.min(100,(done/total)*100)),remain=Math.max(0,diffDays(gd,today));document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ja-JP',{month:'long',day:'numeric',weekday:'short'}).format(new Date());document.getElementById('weekPill').textContent=raw<0?'開始前':today>gd?'完了':`Week ${Math.floor(raw/7)+1}`;document.getElementById('daysDone').textContent=done;document.getElementById('totalDays').textContent=total;document.getElementById('progressPercent').textContent=pct.toFixed(1)+'%';document.getElementById('progressBar').style.width=pct+'%';document.getElementById('remainingDays').textContent=remain+'日';document.getElementById('progressStartDate').textContent=sd.slice(5).replace('-','/');document.getElementById('progressGoalDate').textContent=gd.slice(5).replace('-','/');"
+          if old not in s: raise SystemExit('renderHeader target not found')
+          p.write_text(s.replace(old,new))
+          p=Path('app.css'); s=p.read_text(); s += '''\n.progressTopRow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.progressPercentBox{text-align:right}.progressPercentBox span{display:block;font-size:11px;color:#64748b;font-weight:700}.progressPercentBox b{font-size:24px}.progressTrack{height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:14px 0 8px}.progressFill{height:100%;background:linear-gradient(90deg,#2563eb,#22c55e);border-radius:999px;transition:width .35s ease}.progressMeta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#64748b;margin-bottom:14px}.progressMeta b{color:#111827}\n'''; p.write_text(s)
+          p=Path('sw.js'); s=p.read_text().replace('bodymake12-v1.0.0','bodymake12-v1.0.1').replace('?v=1.0.0','?v=1.0.1'); p.write_text(s)
+          Path('VERSION.txt').write_text('1.0.1\n')
+          PY
+      - name: Commit imported release
+        run: |
+          git config user.name "BodyMake Release Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html app.css app1.js app2.js app3.js manifest.webmanifest sw.js privacy.html terms.html icon-192.png icon-512.png VERSION.txt
+          git commit -m "Import production and fix goal-date progress UI" || exit 0
+          git push
