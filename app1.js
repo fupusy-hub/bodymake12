@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION='1.0.1';
+const APP_VERSION='1.0.2';
 const SCHEMA_VERSION=2;
 const KEY_STATE='bodymake12_state_v2';
 const KEY_BACKUP='bodymake12_state_backup_v2';
