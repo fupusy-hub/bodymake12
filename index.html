@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="description" content="12週間の体重・食事・活動・睡眠・トレーニングを簡単に記録し、トレーナーへ共有できるボディメイク管理アプリ。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BodyMake 12">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>BodyMake 12｜12週間ボディメイク管理</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><h1>12週間 Body Make</h1><div class="sub" id="todayText"></div></div>
+    <span class="pill" id="weekPill">Week 1</span>
+  </div>
+  <div id="storageWarning" class="warningBanner" role="alert">このブラウザでは端末内保存が利用できません。入力内容は画面を閉じると失われる可能性があります。</div>
+
+  <section id="pageInput">
+    <div class="card shareHero">
+      <div class="label">トレーナーへ報告</div>
+      <div class="big" style="font-size:23px">1タップで共有</div>
+      <div class="notice">直近7日の記録をまとめてLINEなどへ送れます。</div>
+      <div class="shareActions">
+        <button type="button" class="btn lineBtn" onclick="shareWeeklySummary()">LINEなどで7日報告を共有</button>
+        <button type="button" class="btn" style="background:rgba(255,255,255,.14);color:white" onclick="shareCSVFile()">記録CSVを共有</button>
+      </div>
+    </div>
+
+    <div class="card hero">
+      <div class="label">12週間の進捗</div>
+      <div class="progressTopRow"><div><div class="label">目標日までの進捗</div><div class="big"><span id="daysDone">0</span> / <span id="totalDays">84</span>日</div></div><div class="progressPercentBox"><span>達成率</span><b id="progressPercent">0%</b></div></div><div class="progressTrack" aria-label="目標日までの進捗"><div id="progressBar" class="progressFill" style="width:0%"></div></div><div class="progressMeta"><span>開始 <b id="progressStartDate">--/--</b></span><span>残り <b id="remainingDays">--日</b></span><span>目標 <b id="progressGoalDate">--/--</b></span></div>
+      <div class="kpis">
+        <div class="kpi"><span class="muted">開始</span><b id="startW">-- kg</b></div>
+        <div class="kpi"><span class="muted">最新</span><b id="latestW">-- kg</b></div>
+        <div class="kpi"><span class="muted">変化</span><b id="changeW">-- kg</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="quickTitle"><h2>今日の記録</h2><button type="button" class="smallBtn" onclick="setToday()">今日</button></div>
+      <div class="label">日付</div><input type="date" id="date"><div class="space"></div>
+      <div class="label">体重（kg）</div><input type="number" id="weight" inputmode="decimal" step="0.1" min="20" max="300" placeholder="例 63.6"><div class="space"></div>
+      <button type="button" class="btn primary" onclick="saveRecord()">保存する</button>
+      <details>
+        <summary>＋ 詳細も入力する</summary><div class="space"></div>
+        <div class="grid2"><div><div class="label">体脂肪率 %</div><input type="number" id="bodyfat" step="0.1" min="1" max="70" inputmode="decimal"></div><div><div class="label">摂取 kcal</div><input type="number" id="kcal" min="0" max="10000" inputmode="numeric"></div></div>
+        <div class="space"></div>
+        <div class="grid3"><div><div class="label">P g</div><input type="number" id="protein" min="0" max="500" inputmode="numeric"></div><div><div class="label">F g</div><input type="number" id="fat" min="0" max="300" inputmode="numeric"></div><div><div class="label">C g</div><input type="number" id="carbs" min="0" max="1000" inputmode="numeric"></div></div>
+        <div class="space"></div>
+        <div class="grid2"><div><div class="label">歩数</div><input type="number" id="steps" min="0" max="100000" inputmode="numeric"></div><div><div class="label">有酸素 分</div><input type="number" id="cardio" min="0" max="1440" inputmode="numeric"></div></div>
+        <div class="space"></div>
+        <div class="grid2"><div><div class="label">睡眠 h</div><input type="number" id="sleep" step="0.1" min="0" max="24" inputmode="decimal"></div><div><div class="label">水分 L</div><input type="number" id="water" step="0.1" min="0" max="20" inputmode="decimal"></div></div>
+        <div class="space"></div>
+        <div class="grid2">
+          <div><div class="label">筋トレ（複数選択可）</div><div class="trainingGrid" id="trainingGroup"><label class="trainingChip"><input type="checkbox" value="胸"><span>胸</span></label><label class="trainingChip"><input type="checkbox" value="背中"><span>背中</span></label><label class="trainingChip"><input type="checkbox" value="肩"><span>肩</span></label><label class="trainingChip"><input type="checkbox" value="脚"><span>脚</span></label><label class="trainingChip"><input type="checkbox" value="腕"><span>腕</span></label><label class="trainingChip"><input type="checkbox" value="腹"><span>腹</span></label><label class="trainingChip"><input type="checkbox" value="休み"><span>休み</span></label><label class="trainingChip"><input type="checkbox" value="その他"><span>その他</span></label></div></div>
+          <div><div class="label">調子</div><select id="condition"><option value="">未選択</option><option value="5">5 とても良い</option><option value="4">4 良い</option><option value="3">3 普通</option><option value="2">2 悪い</option><option value="1">1 とても悪い</option></select></div>
+        </div>
+        <div class="space"></div><div class="label">メモ</div><textarea id="memo" placeholder="トレーニング、食事、疲労など"></textarea>
+      </details>
+    </div>
+    <div class="card"><div class="sectionTitle">直近7日</div><div id="recent"></div></div>
+  </section>
+
+  <section id="pageProgress" class="hidden">
+    <div class="card"><div class="sectionTitle">目標ペース</div><div class="targetBox"><div class="targetGrid"><div class="targetMetric"><div class="label">残り</div><b id="targetDays">--日</b></div><div class="targetMetric"><div class="label">必要ペース</div><b id="targetWeekly">-- kg/週</b></div><div class="targetMetric"><div class="label">必要変化率</div><b id="targetRate">-- %/週</b></div></div><div class="notice" id="targetMessage" style="margin-top:10px">目標日と目標体重から自動計算します。</div></div></div>
+    <div class="card"><div class="sectionTitle">体重推移</div><div class="space"></div><canvas id="chart" class="chart"></canvas><div class="notice">日々の水分変動よりも、7日平均の流れを重視してください。</div></div>
+    <div class="card"><div class="sectionTitle">共有される7日レポート</div><div id="sharePreview" class="sharePreview"></div><div class="shareActions"><button type="button" class="btn lineBtn" onclick="shareWeeklySummary()">LINEなどで共有</button><button type="button" class="btn ghost" onclick="copyWeeklySummary()">文章をコピー</button></div><div class="mini">スマホの共有画面が開きます。LINEを選べば、そのまま送信できます。</div></div>
+    <div class="card"><div class="sectionTitle">週平均</div><div id="weekly"></div></div>
+  </section>
+
+  <section id="pageSettings" class="hidden">
+    <div class="card"><div class="sectionTitle">設定</div><div class="space"></div><div class="setup">
+      <div class="grid2"><div><div class="label">クライアント名</div><input type="text" id="clientName" placeholder="例 山田太郎"></div><div><div class="label">担当トレーナー</div><input type="text" id="trainerName" placeholder="例 森下"></div></div>
+      <div><div class="label">開始日</div><input type="date" id="startDate"></div>
+      <div class="grid2"><div><div class="label">開始体重 kg</div><input type="number" id="startWeight" step="0.1" min="20" max="300"></div><div><div class="label">目標体重 kg</div><input type="number" id="goalWeight" step="0.1" min="20" max="300"></div></div>
+      <div><div class="label">目標日</div><input type="date" id="goalDate"></div><div><div class="label">目標摂取 kcal</div><input type="number" id="goalKcal" min="0" max="10000"></div>
+      <div class="grid3"><div><div class="label">目標P g</div><input type="number" id="goalP" min="0" max="500"></div><div><div class="label">目標F g</div><input type="number" id="goalF" min="0" max="300"></div><div><div class="label">目標C g</div><input type="number" id="goalC" min="0" max="1000"></div></div>
+      <button type="button" class="btn primary" onclick="saveSettings()">設定を保存</button>
+    </div></div>
+    <div class="card"><div class="sectionTitle">データ・バックアップ</div><div class="space"></div><button class="btn secondary" type="button" onclick="exportCSV()">CSVを書き出す</button><div class="space"></div><button class="btn ghost" type="button" onclick="exportBackup()">完全バックアップ（JSON）</button><div class="space"></div><label class="btn ghost" style="display:block;text-align:center">完全バックアップを復元<input id="backupFile" type="file" accept=".json,application/json" onchange="importBackup(event)" style="display:none"></label><div class="space"></div><label class="btn ghost" style="display:block;text-align:center">CSVを読み込む<input id="csvFile" type="file" accept=".csv,text/csv" onchange="importCSV(event)" style="display:none"></label><div class="space"></div><button class="btn ghost" type="button" onclick="restoreLocalBackup()">直前の端末バックアップから復元</button><div class="space"></div><button class="btn danger" type="button" onclick="clearAll()">全データを削除</button><p class="notice">データは原則この端末内に保存されます。端末交換・ブラウザデータ削除に備え、週1回の完全バックアップを推奨します。</p></div>
+    <div class="card"><div class="sectionTitle">ホーム画面に追加</div><p class="notice">iPhone: Safariの共有ボタン →「ホーム画面に追加」。Android: Chromeでは下のボタン、またはメニューからインストールできます。</p><button id="installBtn" class="btn secondary installBtn" type="button" onclick="installApp()">アプリをインストール</button></div>
+    <div class="card"><div class="sectionTitle">プライバシー・安全</div><div class="space"></div><div class="safeNote">本アプリは記録・共有を目的としたツールです。医療上の診断・治療を行うものではありません。体調不良、痛み、強い疲労がある場合は運動を中止し、必要に応じて医療専門職へ相談してください。</div><div class="linkRow"><a class="textLink" href="privacy.html">プライバシーポリシー</a><a class="textLink" href="terms.html">利用規約</a></div></div>
+    <div class="version">BodyMake 12 v1.0.0</div>
+  </section>
+</div>
+<div class="tabs"><div class="tabsInner"><button type="button" class="tab active" data-page="Input" onclick="showPage('Input',this)"><span>✚</span>入力</button><button type="button" class="tab" data-page="Progress" onclick="showPage('Progress',this)"><span>⌁</span>進捗</button><button type="button" class="tab" data-page="Settings" onclick="showPage('Settings',this)"><span>⚙</span>設定</button></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite">保存しました</div>
+<script src="app1.js" defer></script>
+<script src="app2.js" defer></script>
+<script src="app3.js" defer></script>
+</body>
+</html>
